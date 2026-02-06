@@ -43,6 +43,7 @@ CRITICAL RULES:
 - No markdown formatting, no code blocks, no extra text
 - Follow the schema exactly - no additional keys
 - Extract ALL numbers visible on the page with full context
+- For "evidence" field: use ONLY these exact values: "text_layer", "ocr", or "vision" (lowercase, no variations)
 - Ignore branding, logos, and decorative elements unless meaningful
 - Be concise and avoid redundancy
 - Classify page_type accurately from the provided enum"""
@@ -81,8 +82,8 @@ OUTPUT SCHEMA (JSON only):
       "value": 60.0,
       "unit": "%",
       "context": "explanation in Arabic or English",
-      "evidence": "text_layer or ocr or vision",
-      "note": "optional"
+      "evidence": "MUST be exactly one of: text_layer, ocr, vision (lowercase, no other values allowed)",
+      "note": "optional or null"
     }}
   ],
   "confidence": {{
@@ -100,6 +101,7 @@ EXTRACTION TASKS:
 5. Write one-sentence inferred_message
 6. List assumptions_and_gaps
 7. Extract ALL numbers with full context and evidence source
+   - For each number, set "evidence" to EXACTLY one of: "text_layer", "ocr", or "vision" (lowercase only)
 8. Provide confidence scores (0-1)
 
 IGNORE:
