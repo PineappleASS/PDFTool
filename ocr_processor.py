@@ -2,6 +2,9 @@
 OCR processing for extracting text from images.
 """
 import logging
+import os
+from pathlib import Path
+from typing import Optional
 from PIL import Image
 import pytesseract
 from typing import List
@@ -12,14 +15,44 @@ logger = logging.getLogger(__name__)
 class OCRProcessor:
     """Handles OCR text extraction from images."""
     
-    def __init__(self, languages: str = "ara+eng"):
+    def __init__(self, languages: str = "ara+eng", tesseract_cmd: Optional[str] = None):
         """
         Initialize OCR processor.
         
         Args:
             languages: Tesseract language codes (e.g., 'ara+eng' for Arabic+English)
+            tesseract_cmd: Path to tesseract executable (Windows)
         """
         self.languages = languages
+        
+        # Set custom tesseract path if provided
+        if tesseract_cmd:
+            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+        elif os.name == 'nt':
+            # Auto-detect on Windows
+            found_path = self._find_tesseract_windows()
+            if found_path:
+                pytesseract.pytesseract.tesseract_cmd = found_path
+    
+    def _find_tesseract_windows(self) -> Optional[str]:
+        """
+        Try to find tesseract installation on Windows.
+        
+        Returns:
+            Path to tesseract.exe or None
+        """
+        common_paths = [
+            Path("C:/Program Files/Tesseract-OCR/tesseract.exe"),
+            Path("C:/Program Files (x86)/Tesseract-OCR/tesseract.exe"),
+            Path.home() / "AppData/Local/Programs/Tesseract-OCR/tesseract.exe"
+        ]
+        
+        for path in common_paths:
+            if path.exists():
+                logger.info(f"Found tesseract at: {path}")
+                return str(path)
+        
+        return None
     
     def extract_text(self, image: Image.Image) -> str:
         """

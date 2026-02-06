@@ -31,8 +31,14 @@ class ExtractionPipeline:
         self.config = config or Config()
         
         # Initialize components
-        self.pdf_processor = PDFProcessor(scale=self.config.PDF_RENDER_SCALE)
-        self.ocr_processor = OCRProcessor(languages=self.config.TESSERACT_LANGUAGES)
+        self.pdf_processor = PDFProcessor(
+            scale=self.config.PDF_RENDER_SCALE,
+            poppler_path=self.config.POPPLER_PATH or None
+        )
+        self.ocr_processor = OCRProcessor(
+            languages=self.config.TESSERACT_LANGUAGES,
+            tesseract_cmd=self.config.TESSERACT_CMD or None
+        )
         self.vision_extractor = VisionExtractor(
             api_key=self.config.OPENAI_API_KEY,
             model=self.config.OPENAI_MODEL

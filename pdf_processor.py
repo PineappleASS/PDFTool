@@ -2,6 +2,7 @@
 PDF processing: rendering to images and text extraction.
 """
 import logging
+import os
 from pathlib import Path
 from typing import List, Tuple, Optional
 from PIL import Image
@@ -14,15 +15,42 @@ logger = logging.getLogger(__name__)
 class PDFProcessor:
     """Handles PDF rendering and text extraction."""
     
-    def __init__(self, scale: float = 2.5):
+    def __init__(self, scale: float = 2.5, poppler_path: Optional[str] = None):
         """
         Initialize PDF processor.
         
         Args:
             scale: Render scale factor (higher = better quality, slower)
+            poppler_path: Path to poppler binaries (Windows only)
         """
         self.scale = scale
         self.dpi = int(72 * scale)  # 72 DPI is PDF default
+        self.poppler_path = poppler_path
+        
+        # Auto-detect poppler on Windows if not provided
+        if not self.poppler_path and os.name == 'nt':
+            self.poppler_path = self._find_poppler_windows()
+    
+    def _find_poppler_windows(self) -> Optional[str]:
+        """
+        Try to find poppler installation on Windows.
+        
+        Returns:
+            Path to poppler bin directory or None
+        """
+        common_paths = [
+            Path("C:/Program Files/poppler/Library/bin"),
+            Path("C:/Program Files (x86)/poppler/Library/bin"),
+            Path.home() / "poppler/Library/bin",
+            Path("poppler/Library/bin")
+        ]
+        
+        for path in common_paths:
+            if path.exists() and (path / "pdftoppm.exe").exists():
+                logger.info(f"Found poppler at: {path}")
+                return str(path)
+        
+        return None
     
     def render_pages(self, pdf_path: Path, max_pages: Optional[int] = None) -> List[Image.Image]:
         """
@@ -37,6 +65,9 @@ class PDFProcessor:
         """
         logger.info(f"Rendering PDF: {pdf_path} at {self.dpi} DPI")
         
+        if self.poppler_path:
+            logger.info(f"Using poppler from: {self.poppler_path}")
+        
         try:
             # Determine number of pages to process
             last_page = None
@@ -49,7 +80,8 @@ class PDFProcessor:
                 dpi=self.dpi,
                 first_page=1,
                 last_page=last_page,
-                fmt='png'
+                fmt='png',
+                poppler_path=self.poppler_path
             )
             
             logger.info(f"Successfully rendered {len(images)} pages")
@@ -57,6 +89,20 @@ class PDFProcessor:
             
         except Exception as e:
             logger.error(f"Failed to render PDF: {e}")
+            
+            # Provide helpful error message
+            if "poppler" in str(e).lower() or "Unable to get page count" in str(e):
+                error_msg = (
+                    "PDF rendering failed: Poppler not found.\n\n"
+                    "Windows users: Run 'python install_windows_deps.py' to install dependencies.\n"
+                    "Or manually:\n"
+                    "  1. Download poppler: https://github.com/oschwartz10612/poppler-windows/releases/\n"
+                    "  2. Extract to C:\\Program Files\\poppler\n"
+                    "  3. Add to .env: POPPLER_PATH=C:\\Program Files\\poppler\\Library\\bin\n\n"
+                    "Linux/Mac: Install poppler-utils (see README.md)"
+                )
+                raise RuntimeError(error_msg)
+            
             raise RuntimeError(f"PDF rendering failed: {e}")
     
     def extract_text_layer(self, pdf_path: Path) -> List[str]:

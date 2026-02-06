@@ -36,6 +36,20 @@ sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-ara
 brew install poppler tesseract tesseract-lang
 ```
 
+**Windows:**
+
+1. **Install Poppler:**
+   - Download poppler from: https://github.com/oschwartz10612/poppler-windows/releases/
+   - Extract to `C:\Program Files\poppler`
+   - Add `C:\Program Files\poppler\Library\bin` to PATH, OR
+   - Use the automatic installer: `python install_windows_deps.py`
+
+2. **Install Tesseract:**
+   - Download from: https://github.com/UB-Mannheim/tesseract/wiki
+   - Install with default options
+   - Add Tesseract to PATH or set `TESSERACT_CMD` in `.env`
+   - Download Arabic language data during installation
+
 ## Configuration
 
 Create a `.env` file with your OpenAI API key:

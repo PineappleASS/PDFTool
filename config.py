@@ -21,6 +21,10 @@ class Config:
     
     # OCR
     TESSERACT_LANGUAGES = os.getenv("TESSERACT_LANGUAGES", "ara+eng")
+    TESSERACT_CMD = os.getenv("TESSERACT_CMD", "")  # Custom tesseract path (Windows)
+    
+    # PDF Rendering (Windows)
+    POPPLER_PATH = os.getenv("POPPLER_PATH", "")  # Custom poppler path (Windows)
     
     # Quality Control
     RETRY_FLAGGED_PAGES = os.getenv("RETRY_FLAGGED_PAGES", "true").lower() == "true"
