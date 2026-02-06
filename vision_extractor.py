@@ -17,40 +17,84 @@ logger = logging.getLogger(__name__)
 class VisionExtractor:
     """Extracts structured information from PDF pages using vision LLM."""
     
-    def __init__(self, api_key: str, model: str = "gpt-4o"):
+    def __init__(
+        self, 
+        api_key: str, 
+        model: str = "gpt-4o",
+        max_image_size: int = 1024,
+        image_quality: int = 75,
+        detail_level: str = "low",
+        max_text_length: int = 500
+    ):
         """
         Initialize vision extractor.
         
         Args:
             api_key: OpenAI API key
             model: Model to use (must support vision)
+            max_image_size: Max width/height for images (reduces tokens)
+            image_quality: JPEG quality 1-100 (lower = fewer tokens)
+            detail_level: "low" (65 tokens) or "high" (expensive)
+            max_text_length: Max chars for text context (truncates)
         """
         self.client = OpenAI(api_key=api_key)
         self.model = model
+        self.max_image_size = max_image_size
+        self.image_quality = image_quality
+        self.detail_level = detail_level
+        self.max_text_length = max_text_length
     
-    def _image_to_base64(self, image: Image.Image, format: str = "PNG") -> str:
-        """Convert PIL Image to base64 string."""
+    def _resize_image(self, image: Image.Image) -> Image.Image:
+        """Resize image to reduce token usage while keeping aspect ratio."""
+        width, height = image.size
+        
+        # If image is already small enough, don't resize
+        if width <= self.max_image_size and height <= self.max_image_size:
+            return image
+        
+        # Calculate new size maintaining aspect ratio
+        if width > height:
+            new_width = self.max_image_size
+            new_height = int(height * (self.max_image_size / width))
+        else:
+            new_height = self.max_image_size
+            new_width = int(width * (self.max_image_size / height))
+        
+        logger.info(f"Resizing image from {width}x{height} to {new_width}x{new_height}")
+        return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    
+    def _image_to_base64(self, image: Image.Image) -> str:
+        """
+        Convert PIL Image to base64 string with optimization.
+        Uses JPEG compression to drastically reduce token usage.
+        """
+        # Resize image first
+        image = self._resize_image(image)
+        
+        # Convert to RGB if needed (JPEG doesn't support transparency)
+        if image.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
+        
+        # Save as JPEG with compression
         buffered = BytesIO()
-        image.save(buffered, format=format)
+        image.save(buffered, format='JPEG', quality=self.image_quality, optimize=True)
+        size_kb = len(buffered.getvalue()) / 1024
+        logger.info(f"Compressed image to {size_kb:.1f} KB (quality={self.image_quality})")
+        
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
     
     def _build_system_prompt(self) -> str:
-        """Build the system prompt for extraction."""
-        return """You are a precise information extraction system. Your task is to analyze PDF presentation pages and extract structured information.
-
-CRITICAL RULES:
-- Return ONLY valid JSON matching the exact schema provided
-- No markdown formatting, no code blocks, no extra text
-- Follow the schema exactly - no additional keys
-- Extract ALL numbers visible on the page with full context
-- For "evidence" field: use ONLY these exact values: "text_layer", "ocr", or "vision" (lowercase, no variations)
-- Ignore branding, logos, and decorative elements unless meaningful
-- Be concise and avoid redundancy
-- Classify page_type accurately from the provided enum"""
+        """Build the system prompt for extraction (concise for token reduction)."""
+        return """Extract structured info from PDF page. Return ONLY valid JSON, no markdown.
+Rules: Match schema exactly. Use evidence: "text_layer"/"ocr"/"vision" only. Be concise."""
     
     def _build_user_prompt(self, page_index: int, text_layer: str, ocr_text: str) -> str:
         """
-        Build the user prompt for a specific page.
+        Build the user prompt for a specific page (truncated for token reduction).
         
         Args:
             page_index: Page number (1-indexed)
@@ -60,56 +104,24 @@ CRITICAL RULES:
         Returns:
             Formatted prompt string
         """
-        prompt = f"""Extract structured information from this PDF page (page {page_index}).
+        # Truncate text to reduce tokens
+        text_preview = text_layer[:self.max_text_length] if text_layer else "(none)"
+        ocr_preview = ocr_text[:self.max_text_length] if ocr_text else "(none)"
+        
+        if len(text_layer) > self.max_text_length:
+            text_preview += "..."
+        if len(ocr_text) > self.max_text_length:
+            ocr_preview += "..."
+        
+        prompt = f"""Page {page_index}. Text: {text_preview} OCR: {ocr_preview}
 
-INPUTS PROVIDED:
-1. Page image (attached)
-2. PDF text layer: {text_layer[:500] if text_layer else "(empty)"}
-3. OCR text: {ocr_text[:500] if ocr_text else "(empty)"}
+Schema:
+{{"page_index":{page_index},"page_type":"cover|problem|solution_overview|features|...",
+"title":"str","clean_facts":["str"],"visual_explanation":["str"],"inferred_message":"str",
+"assumptions_and_gaps":["str"],"extracted_numbers":[{{"raw":"str","value":float,"unit":"str",
+"context":"str","evidence":"text_layer|ocr|vision"}}],"confidence":{{"facts":0-1,"visuals":0-1,"inference":0-1}}}}
 
-OUTPUT SCHEMA (JSON only):
-{{
-  "page_index": {page_index},
-  "page_type": "one of: cover, problem, current_solution, solution_overview, features, workflow_user_journey, architecture_diagram, hardware_components, impact_metrics, competitive_analysis, business_model, costs_pricing, market_sizing, traction, roadmap, team, appendix, other",
-  "title": "short meaningful title (required)",
-  "clean_facts": ["concise fact 1", "concise fact 2"],
-  "visual_explanation": ["what charts show", "what diagrams depict"],
-  "inferred_message": "one sentence: what this page communicates",
-  "assumptions_and_gaps": ["missing baseline", "no timeframe"],
-  "extracted_numbers": [
-    {{
-      "raw": "60%",
-      "value": 60.0,
-      "unit": "%",
-      "context": "explanation in Arabic or English",
-      "evidence": "MUST be exactly one of: text_layer, ocr, vision (lowercase, no other values allowed)",
-      "note": "optional or null"
-    }}
-  ],
-  "confidence": {{
-    "facts": 0.9,
-    "visuals": 0.85,
-    "inference": 0.8
-  }}
-}}
-
-EXTRACTION TASKS:
-1. Classify page_type from the enum
-2. Create a meaningful title (infer if not explicit)
-3. Extract concise clean_facts (not raw OCR dumps)
-4. Explain visuals (charts, diagrams, UI screenshots)
-5. Write one-sentence inferred_message
-6. List assumptions_and_gaps
-7. Extract ALL numbers with full context and evidence source
-   - For each number, set "evidence" to EXACTLY one of: "text_layer", "ocr", or "vision" (lowercase only)
-8. Provide confidence scores (0-1)
-
-IGNORE:
-- Repeated logos/branding (unless the brand name is key information)
-- Decorative elements
-- Tiny UI labels that don't add meaning
-
-Return ONLY the JSON object, no markdown, no extra text."""
+Tasks: Extract title, facts, visuals, numbers, gaps. evidence must be: text_layer, ocr, or vision. Return JSON only."""
         
         return prompt
     
@@ -142,7 +154,7 @@ Return ONLY the JSON object, no markdown, no extra text."""
             system_prompt = self._build_system_prompt()
             user_prompt = self._build_user_prompt(page_index, text_layer, ocr_text)
             
-            # Call OpenAI API
+            # Call OpenAI API with token optimization
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -154,7 +166,8 @@ Return ONLY the JSON object, no markdown, no extra text."""
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
+                                    "url": f"data:image/jpeg;base64,{image_base64}",
+                                    "detail": self.detail_level  # "low" = 65 tokens, "high" = expensive
                                 }
                             }
                         ]
@@ -163,6 +176,11 @@ Return ONLY the JSON object, no markdown, no extra text."""
                 temperature=0.1,
                 response_format={"type": "json_object"}
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage'):
+                logger.info(f"Page {page_index} tokens: {response.usage.total_tokens} "
+                          f"(prompt: {response.usage.prompt_tokens}, completion: {response.usage.completion_tokens})")
             
             # Parse response
             response_text = response.choices[0].message.content

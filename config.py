@@ -26,8 +26,14 @@ class Config:
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
     
     # PDF Processing
-    PDF_RENDER_SCALE = float(os.getenv("PDF_RENDER_SCALE", "2.5"))
+    PDF_RENDER_SCALE = float(os.getenv("PDF_RENDER_SCALE", "1.5"))  # Reduced from 2.5 to 1.5
     MAX_PAGES_PER_RUN = int(os.getenv("MAX_PAGES_PER_RUN", "20"))
+    
+    # Vision Processing (Token Optimization)
+    VISION_IMAGE_MAX_SIZE = int(os.getenv("VISION_IMAGE_MAX_SIZE", "1024"))  # Max width/height in pixels
+    VISION_IMAGE_QUALITY = int(os.getenv("VISION_IMAGE_QUALITY", "75"))  # JPEG quality 1-100
+    VISION_DETAIL_LEVEL = os.getenv("VISION_DETAIL_LEVEL", "low")  # "low" or "high" - low uses 65 tokens max
+    MAX_TEXT_CONTEXT_LENGTH = int(os.getenv("MAX_TEXT_CONTEXT_LENGTH", "500"))  # Truncate text sent to LLM
     
     # OCR
     TESSERACT_LANGUAGES = os.getenv("TESSERACT_LANGUAGES", "ara+eng")

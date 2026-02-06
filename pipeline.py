@@ -41,7 +41,11 @@ class ExtractionPipeline:
         )
         self.vision_extractor = VisionExtractor(
             api_key=self.config.OPENAI_API_KEY,
-            model=self.config.OPENAI_MODEL
+            model=self.config.OPENAI_MODEL,
+            max_image_size=self.config.VISION_IMAGE_MAX_SIZE,
+            image_quality=self.config.VISION_IMAGE_QUALITY,
+            detail_level=self.config.VISION_DETAIL_LEVEL,
+            max_text_length=self.config.MAX_TEXT_CONTEXT_LENGTH
         )
         self.validator = Validator(
             min_title_length=self.config.MIN_TITLE_LENGTH,
