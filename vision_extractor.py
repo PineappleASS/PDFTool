@@ -171,6 +171,23 @@ Return ONLY the JSON object, no markdown, no extra text."""
             # Parse JSON
             page_data = json.loads(response_text)
             
+            # Normalize evidence fields (fix common LLM mistakes)
+            if "extracted_numbers" in page_data:
+                for num in page_data["extracted_numbers"]:
+                    if "evidence" in num:
+                        evidence_lower = str(num["evidence"]).lower().strip()
+                        # Map common variations to valid values
+                        if "text" in evidence_lower and "layer" in evidence_lower:
+                            num["evidence"] = "text_layer"
+                        elif "ocr" in evidence_lower:
+                            num["evidence"] = "ocr"
+                        elif "vision" in evidence_lower or "visual" in evidence_lower:
+                            num["evidence"] = "vision"
+                        else:
+                            # Default to vision if unclear
+                            logger.warning(f"Unknown evidence value '{num['evidence']}', defaulting to 'vision'")
+                            num["evidence"] = "vision"
+            
             # Create Page object (Pydantic will validate)
             page = Page(**page_data)
             
