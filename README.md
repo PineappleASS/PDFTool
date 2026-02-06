@@ -54,9 +54,18 @@ brew install poppler tesseract tesseract-lang
 
 Create a `.env` file with your OpenAI API key:
 
-```
+```ini
 OPENAI_API_KEY=your_api_key_here
+
+# Optional: Token optimization (see TOKEN_OPTIMIZATION.md)
+VISION_DETAIL_LEVEL=low          # Use 'low' for 80-90% cost reduction
+VISION_IMAGE_MAX_SIZE=1024       # Max image size in pixels
+VISION_IMAGE_QUALITY=75          # JPEG quality (1-100)
+MAX_TEXT_CONTEXT_LENGTH=500      # Truncate text context
 ```
+
+**Cost Optimization:** The tool now uses ~1,500-3,000 tokens per page (vs 25,000 originally).
+See `TOKEN_OPTIMIZATION.md` for detailed cost/quality trade-offs.
 
 ## Usage
 
