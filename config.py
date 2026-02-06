@@ -2,10 +2,20 @@
 Configuration management for the PDF extractor.
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from .env file in the same directory as this script
+_config_dir = Path(__file__).parent
+_env_path = _config_dir / ".env"
+
+# Try to load from project directory first, then fallback to cwd
+if _env_path.exists():
+    load_dotenv(_env_path)
+    print(f"[Config] Loaded .env from: {_env_path}")
+else:
+    load_dotenv()  # Fallback to default search
+    print(f"[Config] Searching for .env in current directory")
 
 
 class Config:
