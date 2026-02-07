@@ -145,14 +145,26 @@ For more information, see README.md
         print(f"Pages:      {document.page_count}")
         print(f"Language:   {document.language.value}")
         print(f"Document ID: {document.document_id}")
-        print("\nDocument Summary:")
-        print(f"  {document.document_summary.one_paragraph}")
-        print(f"\nKey Metrics: {len(document.document_summary.key_metrics)}")
-        for metric in document.document_summary.key_metrics[:3]:
-            print(f"  - {metric}")
-        print(f"\nTop Claims: {len(document.document_summary.top_claims)}")
-        for claim in document.document_summary.top_claims[:3]:
-            print(f"  - {claim}")
+        print("\n" + "─"*60)
+        print("DOCUMENT SUMMARY")
+        print("─"*60)
+        print(f"\n{document.document_summary.one_paragraph}")
+        
+        print(f"\n📊 Key Metrics ({len(document.document_summary.key_metrics)}):")
+        for metric in document.document_summary.key_metrics:
+            print(f"  • {metric}")
+        
+        print(f"\n👥 Key Entities ({len(document.document_summary.key_entities)}):")
+        for entity in document.document_summary.key_entities:
+            print(f"  • {entity}")
+        
+        print(f"\n💡 Top Claims ({len(document.document_summary.top_claims)}):")
+        for claim in document.document_summary.top_claims:
+            print(f"  • {claim}")
+        
+        print(f"\n⚠️  Risks & Gaps ({len(document.document_summary.risks_and_gaps)}):")
+        for risk in document.document_summary.risks_and_gaps:
+            print(f"  • {risk}")
         print("="*60)
         print(f"\nJSON output saved to: {output_path}")
         
