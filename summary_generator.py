@@ -126,8 +126,8 @@ Return JSON only."""
             
             # Set temperature based on model
             model_lower = self.model.lower()
-            if model_lower.startswith("o1") or model_lower.startswith("o5"):
-                # o1/o5 models only support temperature=1
+            if model_lower.startswith("o1") or model_lower.startswith("gpt-5"):
+                # o1/gpt-5 models only support temperature=1
                 api_params["temperature"] = 1
             else:
                 # Other models support lower temperature for consistency
