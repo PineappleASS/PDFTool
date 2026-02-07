@@ -124,8 +124,13 @@ Return JSON only."""
                 "response_format": {"type": "json_object"}
             }
             
-            # o1 models don't support temperature parameter
-            if not self.model.startswith("o1"):
+            # Set temperature based on model
+            model_lower = self.model.lower()
+            if model_lower.startswith("o1") or model_lower.startswith("o5"):
+                # o1/o5 models only support temperature=1
+                api_params["temperature"] = 1
+            else:
+                # Other models support lower temperature for consistency
                 api_params["temperature"] = 0.2
             
             # Call OpenAI API
