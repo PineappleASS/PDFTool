@@ -25,15 +25,8 @@ class SummaryGenerator:
         self.model = model
     
     def _build_system_prompt(self) -> str:
-        """Build system prompt for summary generation."""
-        return """You are a fair, thorough presentation analyst. Analyze comprehensively but efficiently.
-
-RULES:
-- Return ONLY valid JSON
-- Synthesize ALL important information across pages
-- Be thorough but concise (brief phrases, no fluff)
-- Give presenters a fair chance - capture all key points
-- Identify both strengths and gaps"""
+        """Build system prompt for summary generation (ultra-minimal)."""
+        return """Analyze presentation. JSON only. Brief phrases. Fair & complete."""
     
     def _build_user_prompt(self, pages: List[Page]) -> str:
         """
@@ -65,31 +58,12 @@ RULES:
         
         pages_json = json.dumps(page_summaries, ensure_ascii=False, indent=2)
         
-        prompt = f"""Analyze this presentation comprehensively and fairly. Include ALL important information.
+        prompt = f"""Pages:{pages_json}
 
-EXTRACTED PAGES:
-{pages_json}
+Schema:
+{{"one_paragraph":"4-5 sentences","key_metrics":["8-12 items"],"key_entities":["5-10"],"top_claims":["6-10"],"risks_and_gaps":["5-8"]}}
 
-OUTPUT SCHEMA (JSON):
-{{
-  "one_paragraph": "4-5 sentence comprehensive overview covering: what this is, who it's for, main value, approach, and outcome",
-  "key_metrics": ["metric1: X% improvement", "metric2: Y users", ...],
-  "key_entities": ["entity 1", "entity 2", ...],
-  "top_claims": ["claim 1", "claim 2", ...],
-  "risks_and_gaps": ["gap 1", "gap 2", ...]
-}}
-
-COMPREHENSIVE REQUIREMENTS:
-1. one_paragraph: 4-5 sentences covering the full story
-2. key_metrics: 8-12 most important numbers/metrics with context (be thorough)
-3. key_entities: 5-10 stakeholders, users, partners, competitors mentioned
-4. top_claims: 6-10 main value propositions, benefits, or differentiators
-5. risks_and_gaps: 5-8 concerns, missing info, assumptions, or weaknesses
-
-FAIRNESS: This is someone's presentation. Capture ALL significant points. Don't skip important information.
-EFFICIENCY: Use brief phrases. Avoid redundancy. Be precise.
-
-Return JSON only."""
+Include ALL key info. Brief phrases. JSON only."""
         
         return prompt
     

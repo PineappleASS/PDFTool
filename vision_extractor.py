@@ -95,9 +95,8 @@ class VisionExtractor:
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
     
     def _build_system_prompt(self) -> str:
-        """Build the system prompt for extraction (concise for token reduction)."""
-        return """Extract structured info from PDF page. Return ONLY valid JSON, no markdown.
-Rules: Match schema exactly. Use evidence: "text_layer"/"ocr"/"vision" only. Be concise."""
+        """Build the system prompt for extraction (ultra-minimal for token reduction)."""
+        return """JSON only. No markdown. Concise."""
     
     def _build_user_prompt(self, page_index: int, text_layer: str, ocr_text: str) -> str:
         """
@@ -120,16 +119,15 @@ Rules: Match schema exactly. Use evidence: "text_layer"/"ocr"/"vision" only. Be 
         if len(ocr_text) > self.max_text_length:
             ocr_preview += "..."
         
-        prompt = f"""Page {page_index}. Text: {text_preview} OCR: {ocr_preview}
+        prompt = f"""P{page_index}. Txt:{text_preview} OCR:{ocr_preview}
 
-Compact schema:
-{{"p":{page_index},"t":"SELECT_ONE(cover,problem,current_solution,solution_overview,features,workflow_user_journey,architecture_diagram,hardware_components,impact_metrics,competitive_analysis,business_model,costs_pricing,market_sizing,traction,roadmap,team,appendix,other)",
-"ti":"title","f":["fact1","fact2"],"v":["visual1"],"m":"message",
-"g":["gap1"],"n":[{{"r":"60%","val":60,"u":"%","c":"context","e":"SELECT_ONE(text_layer,ocr,vision)"}}],
-"conf":{{"f":0.9,"v":0.85,"i":0.8}}}}
+Schema:
+{{"p":{page_index},"t":"cover|problem|solution_overview|features|...|other",
+"ti":"str","f":[""],"v":[""],"m":"","g":[""],
+"n":[{{"r":"","val":0,"u":"","c":"","e":"text_layer|ocr|vision"}}],
+"conf":{{"f":0.9,"v":0.9,"i":0.9}}}}
 
-CRITICAL: t must be ONE value from the list. e must be ONE of: text_layer, ocr, vision.
-Limits: f≤{self.max_facts}, v≤{self.max_visuals}, g≤{self.max_gaps}. Be brief. Return JSON."""
+t=1 type. e=1 source. Max: f={self.max_facts},v={self.max_visuals},g={self.max_gaps}. Brief."""
         
         return prompt
     
