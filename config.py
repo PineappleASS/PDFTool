@@ -40,6 +40,9 @@ class Config:
     MAX_VISUALS_PER_PAGE = int(os.getenv("MAX_VISUALS_PER_PAGE", "3"))  # Limit visual explanations
     MAX_GAPS_PER_PAGE = int(os.getenv("MAX_GAPS_PER_PAGE", "3"))  # Limit gaps/assumptions
     
+    # Reasoning control (for o1/gpt-5 models)
+    DISABLE_REASONING = os.getenv("DISABLE_REASONING", "true").lower() == "true"  # Explicitly tell AI not to reason
+    
     # Document Summary (comprehensive for fair analysis)
     # Note: Summary is generated once per document, so we can be more generous here
     SUMMARY_DETAIL_LEVEL = os.getenv("SUMMARY_DETAIL_LEVEL", "comprehensive")  # "brief", "balanced", "comprehensive"

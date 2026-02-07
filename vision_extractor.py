@@ -96,7 +96,7 @@ class VisionExtractor:
     
     def _build_system_prompt(self) -> str:
         """Build the system prompt for extraction (ultra-minimal for token reduction)."""
-        return """JSON only. No markdown. Concise."""
+        return """Extract facts ONLY. JSON format. NO REASONING. NO THINKING. Direct extraction."""
     
     def _build_user_prompt(self, page_index: int, text_layer: str, ocr_text: str) -> str:
         """
@@ -119,15 +119,22 @@ class VisionExtractor:
         if len(ocr_text) > self.max_text_length:
             ocr_preview += "..."
         
-        prompt = f"""P{page_index}. Txt:{text_preview} OCR:{ocr_preview}
+        prompt = f"""P{page_index}. {text_preview}
+
+EXTRACT FACTS ONLY. NO REASONING.
 
 Schema:
-{{"p":{page_index},"t":"cover|problem|solution_overview|features|...|other",
-"ti":"str","f":[""],"v":[""],"m":"","g":[""],
-"n":[{{"r":"","val":0,"u":"","c":"","e":"text_layer|ocr|vision"}}],
+{{"p":{page_index},"t":"cover|problem|solution_overview|features|workflow_user_journey|architecture_diagram|hardware_components|impact_metrics|business_model|costs_pricing|market_sizing|traction|roadmap|team|other",
+"ti":"page title","f":["fact1","fact2"],"v":["visual desc"],"m":"1 sentence summary",
+"g":["gap1"],"n":[{{"r":"60%","val":60.0,"u":"%","c":"water reduction","e":"ocr"}}],
 "conf":{{"f":0.9,"v":0.9,"i":0.9}}}}
 
-t=1 type. e=1 source. Max: f={self.max_facts},v={self.max_visuals},g={self.max_gaps}. Brief."""
+RULES:
+- n.val MUST be number (not text!)
+- If no numbers visible, n=[]
+- Max f={self.max_facts}, v={self.max_visuals}, g={self.max_gaps}
+- Brief facts only
+- NO REASONING OR THINKING"""
         
         return prompt
     

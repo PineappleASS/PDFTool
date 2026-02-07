@@ -26,7 +26,7 @@ class SummaryGenerator:
     
     def _build_system_prompt(self) -> str:
         """Build system prompt for summary generation (ultra-minimal)."""
-        return """Analyze presentation. JSON only. Brief phrases. Fair & complete."""
+        return """Summarize presentation. JSON only. Brief. NO REASONING. Direct synthesis."""
     
     def _build_user_prompt(self, pages: List[Page]) -> str:
         """
@@ -61,9 +61,9 @@ class SummaryGenerator:
         prompt = f"""Pages:{pages_json}
 
 Schema:
-{{"one_paragraph":"4-5 sentences","key_metrics":["8-12 items"],"key_entities":["5-10"],"top_claims":["6-10"],"risks_and_gaps":["5-8"]}}
+{{"one_paragraph":"4-5 sentences","key_metrics":["8-12"],"key_entities":["5-10"],"top_claims":["6-10"],"risks_and_gaps":["5-8"]}}
 
-Include ALL key info. Brief phrases. JSON only."""
+NO REASONING. Direct synthesis. Brief. JSON."""
         
         return prompt
     
