@@ -114,16 +114,22 @@ Return JSON only."""
             system_prompt = self._build_system_prompt()
             user_prompt = self._build_user_prompt(pages)
             
-            # Call OpenAI API
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # Build API call parameters
+            api_params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
+                "response_format": {"type": "json_object"}
+            }
+            
+            # o1 models don't support temperature parameter
+            if not self.model.startswith("o1"):
+                api_params["temperature"] = 0.2
+            
+            # Call OpenAI API
+            response = self.client.chat.completions.create(**api_params)
             
             # Log token usage for summary
             if hasattr(response, 'usage'):

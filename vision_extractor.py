@@ -162,10 +162,10 @@ Limits: f≤{self.max_facts}, v≤{self.max_visuals}, g≤{self.max_gaps}. Be br
             system_prompt = self._build_system_prompt()
             user_prompt = self._build_user_prompt(page_index, text_layer, ocr_text)
             
-            # Call OpenAI API with token optimization
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
+            # Build API call parameters
+            api_params = {
+                "model": self.model,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
@@ -181,9 +181,15 @@ Limits: f≤{self.max_facts}, v≤{self.max_visuals}, g≤{self.max_gaps}. Be br
                         ]
                     }
                 ],
-                temperature=0.1,
-                response_format={"type": "json_object"}
-            )
+                "response_format": {"type": "json_object"}
+            }
+            
+            # o1 models don't support temperature parameter
+            if not self.model.startswith("o1"):
+                api_params["temperature"] = 0.1
+            
+            # Call OpenAI API with token optimization
+            response = self.client.chat.completions.create(**api_params)
             
             # Log token usage
             if hasattr(response, 'usage'):
