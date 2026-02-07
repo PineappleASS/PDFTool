@@ -27,8 +27,73 @@ class CompactConfidence(BaseModel):
 class CompactPage(BaseModel):
     """Compact per-page extraction (reduces output tokens by ~40%)."""
     p: int = Field(..., ge=1, description="Page index")
-    t: str = Field(..., description="Page type")
+    t: str = Field(..., description="Page type - must be one value")
     ti: str = Field(..., min_length=1, description="Title")
+    
+    @field_validator("t")
+    @classmethod
+    def validate_page_type(cls, v: str) -> str:
+        """Validate and normalize page_type."""
+        # Valid page types from the enum
+        valid_types = {
+            "cover", "problem", "current_solution", "solution_overview",
+            "features", "workflow_user_journey", "architecture_diagram",
+            "hardware_components", "impact_metrics", "competitive_analysis",
+            "business_model", "costs_pricing", "market_sizing", "traction",
+            "roadmap", "team", "appendix", "other"
+        }
+        
+        v_clean = v.strip().lower()
+        
+        # If it contains pipes, take the first valid one
+        if "|" in v_clean:
+            parts = v_clean.split("|")
+            for part in parts:
+                if part.strip() in valid_types:
+                    return part.strip()
+        
+        # If it's valid, return it
+        if v_clean in valid_types:
+            return v_clean
+        
+        # Try fuzzy matching
+        if "cover" in v_clean:
+            return "cover"
+        elif "problem" in v_clean:
+            return "problem"
+        elif "solution" in v_clean and "current" in v_clean:
+            return "current_solution"
+        elif "solution" in v_clean:
+            return "solution_overview"
+        elif "feature" in v_clean:
+            return "features"
+        elif "workflow" in v_clean or "journey" in v_clean:
+            return "workflow_user_journey"
+        elif "architecture" in v_clean or "diagram" in v_clean:
+            return "architecture_diagram"
+        elif "hardware" in v_clean or "component" in v_clean:
+            return "hardware_components"
+        elif "impact" in v_clean or "metric" in v_clean:
+            return "impact_metrics"
+        elif "competitive" in v_clean or "competition" in v_clean:
+            return "competitive_analysis"
+        elif "business" in v_clean or "model" in v_clean:
+            return "business_model"
+        elif "cost" in v_clean or "pricing" in v_clean:
+            return "costs_pricing"
+        elif "market" in v_clean or "sizing" in v_clean:
+            return "market_sizing"
+        elif "traction" in v_clean:
+            return "traction"
+        elif "roadmap" in v_clean:
+            return "roadmap"
+        elif "team" in v_clean:
+            return "team"
+        elif "appendix" in v_clean:
+            return "appendix"
+        
+        # Default to "other"
+        return "other"
     f: List[str] = Field(default_factory=list, description="Facts")
     v: List[str] = Field(default_factory=list, description="Visuals")
     m: str = Field(default="", description="Message")
