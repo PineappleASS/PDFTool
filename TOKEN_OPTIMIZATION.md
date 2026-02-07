@@ -19,16 +19,19 @@ The original implementation used ~25k tokens per page (250k for 10 pages), which
 | **Prompt compression** | 80% reduction | None (same info) |
 | **Text truncation (500 chars)** | 50-90% reduction | Minimal (context preserved) |
 | **Lower PDF scale (1.5x)** | 40% reduction | Acceptable for most PDFs |
+| **🆕 Compact output schema** | 40% output reduction | None (auto-converted) |
+| **🆕 Output array limits** | 20-30% output reduction | Forces prioritization |
 
 ### Expected Results
 
 | Configuration | Tokens/Page | Cost/Page (GPT-4o) | 10 Pages Cost |
 |--------------|-------------|-------------------|---------------|
 | **Original** | ~25,000 | $0.25 | $2.50 |
-| **Optimized (default)** | ~1,500-3,000 | $0.015-$0.03 | $0.15-$0.30 |
-| **Ultra-low (see below)** | ~500-1,000 | $0.005-$0.01 | $0.05-$0.10 |
+| **Input optimized only** | ~1,500-3,000 | $0.015-$0.03 | $0.15-$0.30 |
+| **🆕 Full optimized (input+output)** | **~800-1,500** | **$0.008-$0.015** | **$0.08-$0.15** |
+| **Ultra-low mode** | ~400-800 | $0.004-$0.008 | $0.04-$0.08 |
 
-**Estimated reduction: 80-90% fewer tokens** 🎉
+**Estimated reduction: 90-97% fewer tokens!** 🎉🎉
 
 ---
 
@@ -43,9 +46,14 @@ VISION_IMAGE_MAX_SIZE=1024           # Max 1024px width/height
 VISION_IMAGE_QUALITY=75              # JPEG quality (1-100)
 VISION_DETAIL_LEVEL=low              # Use OpenAI's low-detail mode (65 tokens)
 MAX_TEXT_CONTEXT_LENGTH=500          # Truncate text context
+
+# Output optimization (NEW!)
+MAX_FACTS_PER_PAGE=5                 # Limit facts to top 5
+MAX_VISUALS_PER_PAGE=3               # Limit visual explanations to 3
+MAX_GAPS_PER_PAGE=3                  # Limit gaps/assumptions to 3
 ```
 
-**Expected:** ~1,500-3,000 tokens/page
+**Expected:** ~800-1,500 tokens/page (90-94% reduction!)
 **Quality:** Good for most presentations
 
 ---
@@ -61,9 +69,14 @@ VISION_IMAGE_MAX_SIZE=768            # Smaller images
 VISION_IMAGE_QUALITY=60              # Lower JPEG quality
 VISION_DETAIL_LEVEL=low              # Low detail mode
 MAX_TEXT_CONTEXT_LENGTH=300          # Less text context
+
+# Ultra-aggressive output limits
+MAX_FACTS_PER_PAGE=3                 # Only top 3 facts
+MAX_VISUALS_PER_PAGE=2               # Only 2 visual explanations
+MAX_GAPS_PER_PAGE=2                  # Only 2 gaps
 ```
 
-**Expected:** ~500-1,000 tokens/page (95% reduction!)
+**Expected:** ~400-800 tokens/page (97% reduction!)
 **Quality:** Acceptable for simple slides with large text
 
 ---
@@ -79,9 +92,14 @@ VISION_IMAGE_MAX_SIZE=1536           # Larger images allowed
 VISION_IMAGE_QUALITY=85              # Better JPEG quality
 VISION_DETAIL_LEVEL=high             # High detail mode (expensive!)
 MAX_TEXT_CONTEXT_LENGTH=1000         # More text context
+
+# More comprehensive output
+MAX_FACTS_PER_PAGE=10                # More facts allowed
+MAX_VISUALS_PER_PAGE=5               # More visual explanations
+MAX_GAPS_PER_PAGE=5                  # More gaps captured
 ```
 
-**Expected:** ~8,000-15,000 tokens/page (still better than original)
+**Expected:** ~5,000-10,000 tokens/page (still 60-75% better than original)
 **Quality:** Best accuracy for complex content
 
 ---
