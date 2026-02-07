@@ -67,3 +67,21 @@ class Config:
         
         if cls.PDF_RENDER_SCALE < 1.0 or cls.PDF_RENDER_SCALE > 5.0:
             raise ValueError("PDF_RENDER_SCALE must be between 1.0 and 5.0")
+        
+        # Validate model name
+        valid_models = {
+            "o1-mini", "o1-preview",  # Reasoning models
+            "gpt-4o", "gpt-4o-mini",  # GPT-4 vision models
+            "gpt-4-turbo", "gpt-4-turbo-preview",
+            "gpt-4-vision-preview"
+        }
+        
+        if cls.OPENAI_MODEL not in valid_models:
+            raise ValueError(
+                f"Invalid OPENAI_MODEL: '{cls.OPENAI_MODEL}'\n\n"
+                f"Valid models:\n"
+                f"  - o1-mini (reasoning, cheap, no temperature)\n"
+                f"  - gpt-4o-mini (cheapest, supports temperature)\n"
+                f"  - gpt-4o (best quality, supports temperature)\n\n"
+                f"Did you mean 'o1-mini' or 'gpt-4o-mini'?"
+            )
