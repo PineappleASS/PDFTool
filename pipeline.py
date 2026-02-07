@@ -45,7 +45,10 @@ class ExtractionPipeline:
             max_image_size=self.config.VISION_IMAGE_MAX_SIZE,
             image_quality=self.config.VISION_IMAGE_QUALITY,
             detail_level=self.config.VISION_DETAIL_LEVEL,
-            max_text_length=self.config.MAX_TEXT_CONTEXT_LENGTH
+            max_text_length=self.config.MAX_TEXT_CONTEXT_LENGTH,
+            max_facts=self.config.MAX_FACTS_PER_PAGE,
+            max_visuals=self.config.MAX_VISUALS_PER_PAGE,
+            max_gaps=self.config.MAX_GAPS_PER_PAGE
         )
         self.validator = Validator(
             min_title_length=self.config.MIN_TITLE_LENGTH,

@@ -10,6 +10,7 @@ from typing import Dict, Any
 from PIL import Image
 from openai import OpenAI
 from models import Page, PageType, Confidence, ExtractedNumber
+from models_compact import CompactPage, compact_to_full
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,10 @@ class VisionExtractor:
         max_image_size: int = 1024,
         image_quality: int = 75,
         detail_level: str = "low",
-        max_text_length: int = 500
+        max_text_length: int = 500,
+        max_facts: int = 5,
+        max_visuals: int = 3,
+        max_gaps: int = 3
     ):
         """
         Initialize vision extractor.
@@ -43,6 +47,9 @@ class VisionExtractor:
         self.image_quality = image_quality
         self.detail_level = detail_level
         self.max_text_length = max_text_length
+        self.max_facts = max_facts
+        self.max_visuals = max_visuals
+        self.max_gaps = max_gaps
     
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Resize image to reduce token usage while keeping aspect ratio."""
@@ -115,13 +122,13 @@ Rules: Match schema exactly. Use evidence: "text_layer"/"ocr"/"vision" only. Be 
         
         prompt = f"""Page {page_index}. Text: {text_preview} OCR: {ocr_preview}
 
-Schema:
-{{"page_index":{page_index},"page_type":"cover|problem|solution_overview|features|...",
-"title":"str","clean_facts":["str"],"visual_explanation":["str"],"inferred_message":"str",
-"assumptions_and_gaps":["str"],"extracted_numbers":[{{"raw":"str","value":float,"unit":"str",
-"context":"str","evidence":"text_layer|ocr|vision"}}],"confidence":{{"facts":0-1,"visuals":0-1,"inference":0-1}}}}
+Compact schema (short keys to reduce tokens):
+{{"p":{page_index},"t":"cover|problem|solution_overview|...",
+"ti":"title","f":["fact1","fact2"],"v":["visual1"],"m":"1-sentence message",
+"g":["gap1"],"n":[{{"r":"60%","val":60,"u":"%","c":"context","e":"ocr|text_layer|vision"}}],
+"conf":{{"f":0.9,"v":0.85,"i":0.8}}}}
 
-Tasks: Extract title, facts, visuals, numbers, gaps. evidence must be: text_layer, ocr, or vision. Return JSON only."""
+Keys: p=page, t=type, ti=title, f=facts(max {self.max_facts}), v=visuals(max {self.max_visuals}), m=message(1 sentence max), g=gaps(max {self.max_gaps}), n=numbers(r=raw,val=value,u=unit,c=context,e=evidence), conf=confidence. KEEP RESPONSES SHORT. Use abbreviations. Return compact JSON."""
         
         return prompt
     
@@ -186,28 +193,31 @@ Tasks: Extract title, facts, visuals, numbers, gaps. evidence must be: text_laye
             response_text = response.choices[0].message.content
             logger.debug(f"LLM response for page {page_index}: {response_text[:200]}...")
             
-            # Parse JSON
+            # Parse JSON (expecting compact format)
             page_data = json.loads(response_text)
             
-            # Normalize evidence fields (fix common LLM mistakes)
-            if "extracted_numbers" in page_data:
-                for num in page_data["extracted_numbers"]:
-                    if "evidence" in num:
-                        evidence_lower = str(num["evidence"]).lower().strip()
+            # Normalize evidence fields in compact format (fix common LLM mistakes)
+            if "n" in page_data:  # compact numbers field
+                for num in page_data["n"]:
+                    if "e" in num:
+                        evidence_lower = str(num["e"]).lower().strip()
                         # Map common variations to valid values
                         if "text" in evidence_lower and "layer" in evidence_lower:
-                            num["evidence"] = "text_layer"
+                            num["e"] = "text_layer"
                         elif "ocr" in evidence_lower:
-                            num["evidence"] = "ocr"
+                            num["e"] = "ocr"
                         elif "vision" in evidence_lower or "visual" in evidence_lower:
-                            num["evidence"] = "vision"
+                            num["e"] = "vision"
                         else:
-                            # Default to vision if unclear
-                            logger.warning(f"Unknown evidence value '{num['evidence']}', defaulting to 'vision'")
-                            num["evidence"] = "vision"
+                            logger.warning(f"Unknown evidence value '{num['e']}', defaulting to 'vision'")
+                            num["e"] = "vision"
             
-            # Create Page object (Pydantic will validate)
-            page = Page(**page_data)
+            # Create CompactPage object (Pydantic will validate)
+            compact_page = CompactPage(**page_data)
+            
+            # Convert to full Page format
+            full_page_data = compact_to_full(compact_page)
+            page = Page(**full_page_data)
             
             logger.info(f"Successfully extracted page {page_index}: {page.title}")
             return page

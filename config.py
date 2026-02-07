@@ -35,6 +35,11 @@ class Config:
     VISION_DETAIL_LEVEL = os.getenv("VISION_DETAIL_LEVEL", "low")  # "low" or "high" - low uses 65 tokens max
     MAX_TEXT_CONTEXT_LENGTH = int(os.getenv("MAX_TEXT_CONTEXT_LENGTH", "500"))  # Truncate text sent to LLM
     
+    # Output Optimization
+    MAX_FACTS_PER_PAGE = int(os.getenv("MAX_FACTS_PER_PAGE", "5"))  # Limit facts to reduce output tokens
+    MAX_VISUALS_PER_PAGE = int(os.getenv("MAX_VISUALS_PER_PAGE", "3"))  # Limit visual explanations
+    MAX_GAPS_PER_PAGE = int(os.getenv("MAX_GAPS_PER_PAGE", "3"))  # Limit gaps/assumptions
+    
     # OCR
     TESSERACT_LANGUAGES = os.getenv("TESSERACT_LANGUAGES", "ara+eng")
     TESSERACT_CMD = os.getenv("TESSERACT_CMD", "")  # Custom tesseract path (Windows)
