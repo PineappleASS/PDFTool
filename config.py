@@ -71,6 +71,7 @@ class Config:
         # Validate model name
         valid_models = {
             "o1-mini", "o1-preview",  # Reasoning models
+            "gpt-5-mini", "gpt-5",  # GPT-5 models
             "gpt-4o", "gpt-4o-mini",  # GPT-4 vision models
             "gpt-4-turbo", "gpt-4-turbo-preview",
             "gpt-4-vision-preview"
@@ -80,8 +81,9 @@ class Config:
             raise ValueError(
                 f"Invalid OPENAI_MODEL: '{cls.OPENAI_MODEL}'\n\n"
                 f"Valid models:\n"
-                f"  - o1-mini (reasoning, cheap, no temperature)\n"
-                f"  - gpt-4o-mini (cheapest, supports temperature)\n"
+                f"  - gpt-5-mini (GPT-5, cheap, reasoning, temperature=1 only)\n"
+                f"  - o1-mini (reasoning, cheap, temperature=1 only)\n"
+                f"  - gpt-4o-mini (cheapest GPT-4, supports temperature)\n"
                 f"  - gpt-4o (best quality, supports temperature)\n\n"
-                f"Did you mean 'o1-mini' or 'gpt-4o-mini'?"
+                f"Did you mean 'gpt-5-mini', 'o1-mini', or 'gpt-4o-mini'?"
             )
