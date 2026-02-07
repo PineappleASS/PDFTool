@@ -276,12 +276,52 @@ Watch these numbers and adjust settings accordingly.
 
 ---
 
+## Reasoning Tokens Issue (o1/gpt-5 models)
+
+### The Hidden Cost
+
+If you're using `o1-mini` or `gpt-5-mini`, you're being charged for **reasoning tokens**:
+
+| Model | Input | Output | Reasoning | Total Cost |
+|-------|-------|--------|-----------|------------|
+| gpt-5-mini | 1,000 tokens | 300 tokens | **2,500 tokens** | **3,800 tokens!** |
+| gpt-4o-mini | 1,000 tokens | 300 tokens | **0 tokens** | **1,300 tokens** |
+
+**Reasoning tokens are internal "thinking" and can be 3-10x your output tokens!**
+
+### You CANNOT Limit Reasoning
+
+OpenAI provides no way to limit reasoning tokens for o1/gpt-5 models.
+
+### Solution: Switch to gpt-4o-mini
+
+```ini
+# In your .env file
+OPENAI_MODEL=gpt-4o-mini  # No reasoning tokens!
+```
+
+**gpt-4o-mini benefits:**
+- ✅ No reasoning tokens (0!)
+- ✅ Supports temperature control
+- ✅ Faster processing
+- ✅ Actually cheaper overall
+- ✅ Good quality for presentations
+
+**Cost comparison (10 pages):**
+- gpt-5-mini: ~$0.10-0.15 (with reasoning tokens!)
+- **gpt-4o-mini: ~$0.02-0.03** (no reasoning!)
+
+**You'll save 70-80% by switching models!**
+
+---
+
 ## Summary
 
 **Quick wins:**
-1. Set `VISION_DETAIL_LEVEL=low` (if not already) - saves 90%
-2. Add `SKIP_OCR=true` - saves 20-30%
-3. Set `VISION_IMAGE_MAX_SIZE=768` - saves 30%
-4. Set `MAX_TEXT_CONTEXT_LENGTH=300` - saves 10%
+1. **Switch to `gpt-4o-mini`** - eliminates reasoning tokens (70% savings!)
+2. Set `VISION_DETAIL_LEVEL=low` (if not already) - saves 90%
+3. Add `SKIP_OCR=true` - saves 20-30%
+4. Set `VISION_IMAGE_MAX_SIZE=768` - saves 30%
+5. Set `MAX_TEXT_CONTEXT_LENGTH=300` - saves 10%
 
-**Total reduction: 70-80% input tokens with minimal quality loss!**
+**Total reduction: 85-95% cost with gpt-4o-mini + optimizations!**
