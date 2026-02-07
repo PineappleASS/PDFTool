@@ -47,6 +47,7 @@ class Config:
     # OCR
     TESSERACT_LANGUAGES = os.getenv("TESSERACT_LANGUAGES", "ara+eng")
     TESSERACT_CMD = os.getenv("TESSERACT_CMD", "")  # Custom tesseract path (Windows)
+    SKIP_OCR = os.getenv("SKIP_OCR", "false").lower() == "true"  # Disable OCR to save tokens
     
     # PDF Rendering (Windows)
     POPPLER_PATH = os.getenv("POPPLER_PATH", "")  # Custom poppler path (Windows)

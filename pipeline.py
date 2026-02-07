@@ -212,9 +212,13 @@ class ExtractionPipeline:
         logger.info("Step 1: Rendering PDF and extracting text layer")
         images, text_layers, page_count = self.pdf_processor.process_pdf(pdf_path, max_pages)
         
-        # Step 2: Run OCR
-        logger.info("Step 2: Running OCR on pages")
-        ocr_texts = self.ocr_processor.extract_text_batch(images)
+        # Step 2: Run OCR (unless disabled for token savings)
+        if self.config.SKIP_OCR:
+            logger.info("Step 2: OCR disabled (SKIP_OCR=true) - using PDF text layer only")
+            ocr_texts = [""] * page_count
+        else:
+            logger.info("Step 2: Running OCR on pages")
+            ocr_texts = self.ocr_processor.extract_text_batch(images)
         
         # Step 3: Extract each page with vision
         logger.info("Step 3: Extracting structured information from each page")
