@@ -9,8 +9,7 @@ from io import BytesIO
 from typing import Dict, Any
 from PIL import Image
 from openai import OpenAI
-from models import Page, PageType, Confidence, ExtractedNumber
-from models_compact import CompactPage, compact_to_full
+from models import Page, PageType, Confidence, ExtractedNumber, CompactPage, compact_to_full
 
 logger = logging.getLogger(__name__)
 
