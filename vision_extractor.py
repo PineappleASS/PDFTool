@@ -1,12 +1,13 @@
 """
 Vision-based extraction using LLM (GPT-4 Vision).
 Processes page images with text context to extract structured information.
+Includes document summary generation.
 """
 import logging
 import json
 import base64
 from io import BytesIO
-from typing import Dict, Any
+from typing import Dict, Any, List
 from PIL import Image
 from openai import OpenAI
 from models import Page, PageType, Confidence, ExtractedNumber, CompactPage, compact_to_full, DocumentSummary
