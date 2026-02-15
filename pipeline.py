@@ -9,11 +9,9 @@ from PIL import Image
 
 from config import Config
 from models import Document, Source, Page, Language
-from pdf_processor import PDFProcessor
-from ocr_processor import OCRProcessor
-from vision_extractor import VisionExtractor
+from pdf_processor import PDFProcessor, OCRProcessor
+from vision_extractor import VisionExtractor, SummaryGenerator
 from validator import Validator, ValidationFlag
-from summary_generator import SummaryGenerator
 
 logger = logging.getLogger(__name__)
 
